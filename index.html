@@ -236,6 +236,16 @@ function sample() {
     trip: off ? undefined : t(0.3, 12.4, 2.8, 0), trips: [t(12, 18.4, 3.9, 0), t(23, 18.1, 4.1, 0), t(40, 46, 6.2, 1.4), t(45, 9.2, 2, 0)],
     week: { cost: 14.2, prev: 19.6, electric: 9.5, fuel: 4.7 }, charges: [{ start: now - 30 * h, end: now - 27 * h, from: 41, to: 91, kwh: 14.8, cost: 4.44, estimated: true }] };
 }
+// Home Screen copies of this page keep an old copy for a while (GitHub Pages lets phones cache it ~10 min, iOS longer):
+// version.json is fetched fresh each time, and a newer one reloads the page at an address the phone hasn't cached.
+const PAGE_VERSION = "3";
+async function checkVersion() {
+  try {
+    const v = (await (await fetch("version.json?t=" + Date.now(), { cache: "no-store" })).json()).v;
+    if (v && v !== PAGE_VERSION && !new RegExp("[?&]v=" + v + "(&|$)").test(location.search)) location.replace(location.pathname + "?v=" + v + (demo ? "&demo" : ""));
+  } catch (e) {}
+}
+checkVersion();
 nav.querySelectorAll("button").forEach(b => b.onclick = () => { tab = b.dataset.t; scrollTo(0, 0); render(); });
 if (/tab=(\w+)/.test(location.search)) tab = RegExp.$1;
 (async () => {
@@ -244,6 +254,6 @@ if (/tab=(\w+)/.test(location.search)) tab = RegExp.$1;
   render(); load();
 })();
 setInterval(() => { if (document.visibilityState === "visible") load(); }, 60e3);
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") load(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { checkVersion(); load(); } });
 </script>
 </body></html>
