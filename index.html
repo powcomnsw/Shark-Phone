@@ -156,6 +156,8 @@ function truckPage() {
     `<div class="grid"${seen ? "" : ' style="margin-top:0"'}>${pct("Battery", d.battery, "")}${pct("Fuel", d.fuel, "k")}</div>` +
     (lock || tyres ? `<div class="b stone${old}"><div class="lab">${esc(lock || "Tyres")}</div>${ty ? '<div class="corner">Tyres, psi</div>' : ""}${tyres}</div>` : "") +
     (facts.length ? `<div class="b${old}">${facts.map(f => `<div class="line">${f[0]}<span class="val" style="opacity:1;font-weight:600;font-size:14px">${esc(f[1])}</span></div>`).join("")}</div>` : "") +
+    (fresh && d.liveUrls && d.liveUrls.length ? `<a class="b mint" style="display:block;text-decoration:none" href="${esc(d.liveUrls[0])}"><div class="lab">At the truck?</div>
+      <div style="font-size:20px;font-weight:800;margin-top:4px">Open live controls</div><div class="sub" style="margin-top:4px">Climate, drive mode, music and setup. Your phone needs to be on the truck's Wi-Fi.</div></a>` : "") +
     (d.trip ? `<div class="b mint"><div class="lab">This trip</div><div class="corner">Started ${shortWhen(d.trip.start)}</div>
       <div class="big">${d.trip.km}<small>km</small></div><div class="sub" style="margin-top:6px">${tripBits(d.trip)}</div></div>` : "");
 }
@@ -174,7 +176,7 @@ function tripsPage() {
     : (charges.length ? charges.map(c => `<div class="line">${shortWhen(c.start)} · ${c.from}% → ${c.to}%<span>${[c.kwh != null ? "+" + c.kwh + " kWh" : null, money(c.cost), c.estimated ? "estimated" : null].filter(Boolean).join(" · ")}</span></div>`).join("") : `<p class="sub">No charges recorded yet</p>`);
   return head("Trips") +
     `<div class="b ink"><div class="lab">This week</div><div class="corner">Last week ${money(w.prev || 0)}</div><div class="bars">${bars}</div>
-      <div style="font-size:26px;font-weight:800;margin-top:10px">${money(w.cost || 0)} · ${(Math.round(weekKm * 10) / 10)} km <span class="sub" style="font-size:13px;font-weight:400">electric ${money(w.electric || 0)} · fuel ${money(w.fuel || 0)}</span></div></div>
+      <div style="font-size:26px;font-weight:800;margin-top:10px">${money(w.cost || 0)} · ${(Math.round(weekKm * 10) / 10)} km</div><div class="sub" style="font-size:13px;margin-top:2px">electric ${money(w.electric || 0)} · fuel ${money(w.fuel || 0)}</div></div>
      <div class="b"><div class="row" style="margin-top:0"><button class="pill ${tripTab === "trips" ? "on" : ""}" data-tt="trips">Trips</button><button class="pill ${tripTab === "charges" ? "on" : ""}" data-tt="charges">Charging</button></div>
       <div style="margin-top:6px">${list}</div></div>`;
 }
