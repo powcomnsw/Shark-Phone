@@ -165,7 +165,8 @@ function tripsPage() {
   // this week's cost per day, Monday first, from the trips in the file
   const now = new Date(), mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)).getTime();
   const days = [0, 0, 0, 0, 0, 0, 0];
-  trips.forEach(t => { const i = Math.floor((t.start - mon) / 864e5); if (i >= 0 && i < 7) days[i] += t.cost || 0; });
+  let weekKm = 0;
+  trips.forEach(t => { const i = Math.floor((t.start - mon) / 864e5); if (i >= 0 && i < 7) { days[i] += t.cost || 0; weekKm += t.km || 0; } });
   const top = Math.max(...days, 0.01);
   const bars = days.map((v, i) => `<div><i class="${v ? "" : "z"}" style="height:${v ? Math.max(8, Math.round(v / top * 66)) : 6}px"></i><span class="sub" style="display:block;margin-top:6px">${"MTWTFSS"[i]}</span></div>`).join("");
   const list = tripTab === "trips"
@@ -173,7 +174,7 @@ function tripsPage() {
     : (charges.length ? charges.map(c => `<div class="line">${shortWhen(c.start)} · ${c.from}% → ${c.to}%<span>${[c.kwh != null ? "+" + c.kwh + " kWh" : null, money(c.cost), c.estimated ? "estimated" : null].filter(Boolean).join(" · ")}</span></div>`).join("") : `<p class="sub">No charges recorded yet</p>`);
   return head("Trips") +
     `<div class="b ink"><div class="lab">This week</div><div class="corner">Last week ${money(w.prev || 0)}</div><div class="bars">${bars}</div>
-      <div style="font-size:26px;font-weight:800;margin-top:10px">${money(w.cost || 0)} <span class="sub" style="font-size:13px;font-weight:400">electric ${money(w.electric || 0)} · fuel ${money(w.fuel || 0)}</span></div></div>
+      <div style="font-size:26px;font-weight:800;margin-top:10px">${money(w.cost || 0)} · ${(Math.round(weekKm * 10) / 10)} km <span class="sub" style="font-size:13px;font-weight:400">electric ${money(w.electric || 0)} · fuel ${money(w.fuel || 0)}</span></div></div>
      <div class="b"><div class="row" style="margin-top:0"><button class="pill ${tripTab === "trips" ? "on" : ""}" data-tt="trips">Trips</button><button class="pill ${tripTab === "charges" ? "on" : ""}" data-tt="charges">Charging</button></div>
       <div style="margin-top:6px">${list}</div></div>`;
 }
