@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Shark 6">
+<meta name="theme-color" content="#E8EDEE">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Shark 6</title>
+<style>
+@font-face{font-family:A;src:url(archivo_regular.ttf);font-weight:400;font-display:swap}
+@font-face{font-family:A;src:url(archivo_semibold.ttf);font-weight:600;font-display:swap}
+@font-face{font-family:A;src:url(archivo_extrabold.ttf);font-weight:800;font-display:swap}
+:root{--paper:#E8EDEE;--ink:#12161A;--mint:#62D2DD;--white:#fff;--stone:#D3DDE0;--track:#DFE5E7;--on:#EEF2F3;--soft:#EDF0F1}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:A,-apple-system,Helvetica,Arial,sans-serif;background:var(--paper);color:var(--ink);
+ padding:calc(env(safe-area-inset-top) + 14px) 12px calc(env(safe-area-inset-bottom) + 100px);max-width:520px;margin:auto;-webkit-text-size-adjust:100%}
+.top{display:flex;justify-content:space-between;align-items:center;padding:0 6px 12px;gap:8px}
+.top h1{font-size:22px;font-weight:800}
+.live{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;background:var(--white);border-radius:99px;padding:7px 12px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:#9AA5AB}.dot.on{background:var(--mint)}
+.b{border-radius:26px;padding:16px;background:var(--white);position:relative;margin-top:10px}
+.b:first-child{margin-top:0}
+.b.ink{background:var(--ink);color:var(--on)}.b.mint{background:var(--mint)}.b.stone{background:var(--stone)}
+.lab{font-size:12.5px;font-weight:600}.sub{font-size:12px;opacity:.6}
+.corner{position:absolute;top:16px;right:16px;font-size:12px;opacity:.6}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.grid .b{margin-top:0}
+.big{font-size:64px;font-weight:800;line-height:1;letter-spacing:-2px;margin-top:22px}
+.big small{font-size:20px;letter-spacing:0;margin-left:2px}
+.old .big,.old .val{opacity:.45}
+.meter{height:8px;border-radius:9px;background:var(--track);margin-top:10px;overflow:hidden}.meter i{display:block;height:100%;border-radius:9px;background:var(--mint)}
+.meter.k i{background:var(--ink)}
+.pill{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 15px;border-radius:99px;background:var(--soft);font-size:13.5px;font-weight:600;border:0;color:var(--ink);font-family:inherit}
+.pill.on{background:var(--ink);color:var(--on)}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.line{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid rgba(18,22,26,.07);font-size:14px;font-weight:600}
+.line:last-child{border:0}.line span{font-weight:400;opacity:.6;font-size:13px;text-align:right}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:12px 10px;margin-top:12px}
+.kv div b{display:block;font-size:19px;font-weight:800}
+.title{font-size:30px;font-weight:800;margin-top:14px;line-height:1.1}
+.nav{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 14px);max-width:496px;margin:auto;background:var(--ink);border-radius:99px;height:64px;display:flex;align-items:center;justify-content:space-around;padding:0 8px}
+.nav button{color:var(--on);font:600 13px A,sans-serif;opacity:.6;padding:12px 22px;border-radius:99px;background:none;border:0}
+.nav button.cur{background:var(--mint);color:var(--ink);opacity:1}
+.bars{display:flex;align-items:flex-end;gap:8px;height:92px;margin-top:14px}
+.bars div{flex:1;text-align:center}.bars i{display:block;border-radius:8px;background:var(--mint);min-height:6px}.bars i.z{background:rgba(238,242,243,.12)}
+input{width:100%;font:16px A,sans-serif;padding:13px;border:2px solid var(--stone);border-radius:14px;margin-top:10px;background:#fff;color:var(--ink)}
+a.pill{text-decoration:none}ol{padding-left:20px;font-size:14px;line-height:1.5;margin-top:8px}a{color:inherit}
+.note{background:var(--mint);border-radius:14px;padding:10px 12px;font-size:13.5px;margin-top:10px}
+p{font-size:14px;line-height:1.45;margin-top:8px}
+[hidden]{display:none!important}
+</style></head><body>
+<div id="app"></div>
+<nav class="nav" id="nav" hidden><button data-t="truck">Truck</button><button data-t="trips">Trips</button><button data-t="more">More</button></nav>
+<script>
+"use strict";
+// Shark Central's phone page. It reads one file, shark-status.json, that the truck leaves in the owner's own
+// Dropbox app folder. Nothing here can reach or change the truck. The Dropbox app key and refresh token stay in
+// this browser's storage; there is no app secret (code flow with PKCE).
+// The owner's Dropbox app key: a public identifier (there is no secret with PKCE).
+const DEFAULT_KEY = "e666t4u5e749xzh";
+const FILE = "/shark-status.json", TOKEN_URL = "https://api.dropboxapi.com/oauth2/token";
+const $ = s => document.querySelector(s), app = $("#app"), nav = $("#nav");
+const store = { get: k => { try { return localStorage.getItem("shark_" + k) } catch (e) { return null } },
+  set: (k, v) => { try { v == null ? localStorage.removeItem("shark_" + k) : localStorage.setItem("shark_" + k, v) } catch (e) {} } };
+const demo = /[?&]demo/.test(location.search);
+let tab = "truck", data = null, problem = null, access = null, accessUntil = 0, tripTab = "trips";
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const money = v => v == null ? null : "$" + Number(v).toFixed(2);
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+function when(ms) {
+  const d = new Date(ms), now = new Date(), day = 864e5;
+  const t = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).toLowerCase();
+  const d0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (ms >= d0) return "Today, " + t;
+  if (ms >= d0 - day) return "Yesterday, " + t;
+  return d.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" }) + ", " + t;
+}
+const shortWhen = ms => new Date(ms).toLocaleDateString([], { weekday: "short" }) + " " + new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).toLowerCase();
+
+// ---- Dropbox ----
+async function form(params) {
+  const r = await fetch(TOKEN_URL, { method: "POST", body: new URLSearchParams(params) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error_description || j.error || ("Dropbox said " + r.status));
+  return j;
+}
+async function startLink(key) {
+  const verifier = b64url(crypto.getRandomValues(new Uint8Array(48)));
+  const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
+  store.set("key", key); store.set("verifier", verifier);
+  return "https://www.dropbox.com/oauth2/authorize?client_id=" + encodeURIComponent(key) +
+    "&response_type=code&token_access_type=offline&code_challenge=" + challenge + "&code_challenge_method=S256";
+}
+async function finishLink(code) {
+  const j = await form({ grant_type: "authorization_code", code: code.trim(), code_verifier: store.get("verifier"), client_id: store.get("key") });
+  if (!j.refresh_token) throw new Error("Dropbox gave no refresh token");
+  store.set("refresh", j.refresh_token); store.set("verifier", null);
+  access = j.access_token; accessUntil = Date.now() + ((j.expires_in || 3600) - 120) * 1000;
+}
+async function token() {
+  if (access && Date.now() < accessUntil) return access;
+  const j = await form({ grant_type: "refresh_token", refresh_token: store.get("refresh"), client_id: store.get("key") });
+  access = j.access_token; accessUntil = Date.now() + ((j.expires_in || 3600) - 120) * 1000;
+  return access;
+}
+async function download() {
+  const t = await token();
+  let last;
+  // Dropbox's download endpoint has been reported to fail its browser pre-flight now and then: try it, then a temporary link
+  for (let i = 0; i < 2; i++) {
+    try {
+      const r = await fetch("https://content.dropboxapi.com/2/files/download", { method: "POST",
+        headers: { Authorization: "Bearer " + t, "Dropbox-API-Arg": JSON.stringify({ path: FILE }) } });
+      if (r.status === 409) throw Object.assign(new Error("The truck hasn't saved anything to this Dropbox yet"), { final: true });
+      if (!r.ok) throw new Error("Dropbox said " + r.status);
+      return await r.json();
+    } catch (e) { if (e.final) throw e; last = e; }
+  }
+  try {
+    const r = await fetch("https://api.dropboxapi.com/2/files/get_temporary_link", { method: "POST",
+      headers: { Authorization: "Bearer " + t, "Content-Type": "application/json" }, body: JSON.stringify({ path: FILE }) });
+    if (r.status === 409) throw Object.assign(new Error("The truck hasn't saved anything to this Dropbox yet"), { final: true });
+    const j = await r.json();
+    return await (await fetch(j.link)).json();
+  } catch (e) { throw e.final ? e : (last || e); }
+}
+
+// ---- pages ----
+function head(title) {
+  const fresh = data && data.state === "on" && Date.now() - data.updated < 4 * 60e3;
+  const label = !data ? (problem ? "No data" : "Loading") : fresh ? "Truck is on" : "Truck is off";
+  return `<div class="top"><h1>${title}</h1><div class="live" id="refresh"><i class="dot ${fresh ? "on" : ""}"></i>${label}</div></div>`;
+}
+function truckPage() {
+  const d = data, fresh = d.state === "on" && Date.now() - d.updated < 4 * 60e3, old = fresh ? "" : " old";
+  const seen = fresh ? "" : `<div class="b ink"><div class="lab">Last seen</div><div class="title">${when(d.updated)}</div>
+    <div class="sub" style="margin-top:8px;line-height:1.4">The screen in the truck switches off a few minutes after the truck does. These are its last readings.</div></div>`;
+  const pct = (name, o, k) => !o ? "" : `<div class="b${old}"><div class="lab">${name}</div><div class="big">${o.pct}<small>%</small></div>
+    <div class="sub" style="margin-top:6px">${o.km != null ? o.km + " km" : "&nbsp;"}</div><div class="meter ${k}"><i style="width:${o.pct}%"></i></div></div>`;
+  const body = d.body || {};
+  const lock = [body.locked == null ? null : body.locked ? "Locked" : "Unlocked",
+    body.doorsOpen == null ? null : body.doorsOpen ? body.doorsOpen + (body.doorsOpen > 1 ? " doors open" : " door open") : "doors closed",
+    body.windowsOpen == null ? null : body.windowsOpen ? body.windowsOpen + (body.windowsOpen > 1 ? " windows open" : " window open") : "windows closed"].filter(Boolean).join(" · ");
+  const ty = d.tyresPsi;
+  const tyres = !ty ? "" : `<div class="kv">${["Front left", "Front right", "Rear left", "Rear right"].map((n, i) =>
+    `<div><span class="sub">${n}</span><b class="val">${ty[i] == null ? "–" : ty[i]}</b></div>`).join("")}</div>`;
+  const facts = [["Range", d.rangeKm != null ? d.rangeKm + " km" : null], ["Odometer", d.odoKm != null ? d.odoKm.toLocaleString() + " km" : null],
+    ["Drive mode", d.driveMode], ["Outside", d.outsideC != null ? d.outsideC + "°" : null],
+    ["Climate", d.climate ? (d.climate.on ? "On, set to " + d.climate.driver + "°" : "Off") : null]].filter(f => f[1] != null);
+  return head("Shark 6") + seen +
+    `<div class="grid"${seen ? "" : ' style="margin-top:0"'}>${pct("Battery", d.battery, "")}${pct("Fuel", d.fuel, "k")}</div>` +
+    (lock || tyres ? `<div class="b stone${old}"><div class="lab">${esc(lock || "Tyres")}</div>${ty ? '<div class="corner">Tyres, psi</div>' : ""}${tyres}</div>` : "") +
+    (facts.length ? `<div class="b${old}">${facts.map(f => `<div class="line">${f[0]}<span class="val" style="opacity:1;font-weight:600;font-size:14px">${esc(f[1])}</span></div>`).join("")}</div>` : "") +
+    (d.trip ? `<div class="b mint"><div class="lab">This trip</div><div class="corner">Started ${shortWhen(d.trip.start)}</div>
+      <div class="big">${d.trip.km}<small>km</small></div><div class="sub" style="margin-top:6px">${tripBits(d.trip)}</div></div>` : "");
+}
+const tripBits = t => [t.kwh != null ? t.kwh + " kWh" : null, t.litres ? t.litres + " L" : null, money(t.cost), t.estimated ? "estimated" : null].filter(Boolean).join(" · ") || "Energy not reported";
+function tripsPage() {
+  const d = data, w = d.week || {}, trips = d.trips || [], charges = d.charges || [];
+  // this week's cost per day, Monday first, from the trips in the file
+  const now = new Date(), mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)).getTime();
+  const days = [0, 0, 0, 0, 0, 0, 0];
+  trips.forEach(t => { const i = Math.floor((t.start - mon) / 864e5); if (i >= 0 && i < 7) days[i] += t.cost || 0; });
+  const top = Math.max(...days, 0.01);
+  const bars = days.map((v, i) => `<div><i class="${v ? "" : "z"}" style="height:${v ? Math.max(8, Math.round(v / top * 66)) : 6}px"></i><span class="sub" style="display:block;margin-top:6px">${"MTWTFSS"[i]}</span></div>`).join("");
+  const list = tripTab === "trips"
+    ? (trips.length ? trips.map(t => `<div class="line">${shortWhen(t.start)} · ${t.km} km<span>${tripBits(t)}</span></div>`).join("") : `<p class="sub">No trips recorded yet</p>`)
+    : (charges.length ? charges.map(c => `<div class="line">${shortWhen(c.start)} · ${c.from}% → ${c.to}%<span>${[c.kwh != null ? "+" + c.kwh + " kWh" : null, money(c.cost), c.estimated ? "estimated" : null].filter(Boolean).join(" · ")}</span></div>`).join("") : `<p class="sub">No charges recorded yet</p>`);
+  return head("Trips") +
+    `<div class="b ink"><div class="lab">This week</div><div class="corner">Last week ${money(w.prev || 0)}</div><div class="bars">${bars}</div>
+      <div style="font-size:26px;font-weight:800;margin-top:10px">${money(w.cost || 0)} <span class="sub" style="font-size:13px;font-weight:400">electric ${money(w.electric || 0)} · fuel ${money(w.fuel || 0)}</span></div></div>
+     <div class="b"><div class="row" style="margin-top:0"><button class="pill ${tripTab === "trips" ? "on" : ""}" data-tt="trips">Trips</button><button class="pill ${tripTab === "charges" ? "on" : ""}" data-tt="charges">Charging</button></div>
+      <div style="margin-top:6px">${list}</div></div>`;
+}
+function morePage() {
+  return head("More") +
+    `<div class="b"><div class="lab">Where this comes from</div><p>The truck saves its readings to a file in your Dropbox every minute while it is on, and once more when it is switched off. This page only reads that file: it can't change anything in the truck.</p>
+      ${data ? `<div class="line" style="margin-top:8px">Last saved<span>${when(data.updated)}</span></div><div class="line">Shark Central<span>${esc(data.app || "")}</span></div>` : ""}</div>
+     <div class="b stone"><div class="lab">This phone</div><div class="row"><button class="pill" id="reload">Refresh now</button><button class="pill" id="signout">Disconnect Dropbox</button></div></div>`;
+}
+function setupPage(note) {
+  const key = store.get("key"), step2 = key && store.get("verifier");
+  return `<div class="top"><h1>Shark 6</h1></div>` + (note ? `<div class="note">${esc(note)}</div>` : "") + (step2
+    ? `<div class="b"><div class="lab">Connect your Dropbox</div><p>Tap Open Dropbox, then Allow. Dropbox shows a code: copy it, come back here and paste it.</p>
+        <div class="row"><a class="pill on" id="open" target="_blank" rel="noopener" href="#">Open Dropbox</a></div>
+        <input id="code" placeholder="Code from Dropbox" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <div class="row"><button class="pill on" id="connect">Connect</button><button class="pill" id="back">Use a different key</button></div></div>`
+    : `<div class="b"><div class="lab">Connect your Dropbox</div><p>This page shows what the truck saves to your Dropbox. Paste the same Dropbox app key you gave the truck (Setup → Phone app).</p>
+        <input id="key" placeholder="App key" value="${esc(key || "")}" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <div class="row"><button class="pill on" id="next">Next</button><a class="pill" href="?demo">See it with sample data</a></div></div>`);
+}
+
+function render(note) {
+  const linked = demo || store.get("refresh");
+  nav.hidden = !linked;
+  if (!linked) { app.innerHTML = setupPage(note); wireSetup(); return; }
+  nav.querySelectorAll("button").forEach(b => b.classList.toggle("cur", b.dataset.t === tab));
+  if (!data && tab !== "more") {
+    app.innerHTML = head("Shark 6") + `<div class="b"><div class="lab">${problem ? "Couldn't read the file" : "Reading from Dropbox"}</div>${problem ? `<p>${esc(problem)}</p><div class="row"><button class="pill on" id="reload">Try again</button></div>` : ""}</div>`;
+  } else app.innerHTML = tab === "trips" ? tripsPage() : tab === "more" ? morePage() : truckPage();
+  const r = $("#refresh"); if (r) r.onclick = load;
+  const rl = $("#reload"); if (rl) rl.onclick = load;
+  const so = $("#signout"); if (so) so.onclick = () => { if (confirm("Disconnect this phone from Dropbox?")) { ["refresh", "verifier"].forEach(k => store.set(k, null)); data = null; access = null; render(); } };
+  app.querySelectorAll("[data-tt]").forEach(b => b.onclick = () => { tripTab = b.dataset.tt; render(); });
+}
+function wireSetup() {
+  const next = $("#next"), open = $("#open"), connect = $("#connect"), back = $("#back");
+  if (next) next.onclick = async () => { const k = $("#key").value.trim(); if (!k) return; store.set("link", await startLink(k)); render(); };
+  if (open) open.href = store.get("link") || "#";
+  if (back) back.onclick = () => { store.set("verifier", null); render(); };
+  if (connect) connect.onclick = async () => {
+    const c = $("#code").value.trim(); if (!c) return;
+    connect.textContent = "Connecting";
+    try { await finishLink(c); store.set("link", null); render(); load(); } catch (e) { render("That didn't work: " + e.message); }
+  };
+}
+async function load() {
+  if (demo) { data = sample(); render(); return; }
+  if (!store.get("refresh")) return;
+  try { data = await download(); problem = null; } catch (e) { problem = e.message || String(e); }
+  render();
+}
+function sample() {
+  const now = Date.now(), h = 36e5, off = /demo=off/.test(location.search);
+  const t = (ago, km, kwh, litres) => ({ start: now - ago * h, end: now - ago * h + 25 * 6e4, km, kwh, litres, cost: +(kwh * 0.3 + (litres || 0) * 2).toFixed(2) });
+  return { v: 1, updated: off ? now - 5 * h : now - 20e3, app: "0.4.30", state: off ? "off" : "on", battery: { pct: 60, km: 43 }, fuel: { pct: 83, km: 566 }, rangeKm: 609, odoKm: 4812,
+    outsideC: 17, tyresPsi: [37.9, 37.9, 41.3, 41.6], body: { locked: off, doorsOpen: 0, windowsOpen: 0 }, climate: off ? undefined : { on: true, driver: 21, passenger: 22, fan: 3 }, driveMode: "Eco",
+    trip: off ? undefined : t(0.3, 12.4, 2.8, 0), trips: [t(12, 18.4, 3.9, 0), t(23, 18.1, 4.1, 0), t(40, 46, 6.2, 1.4), t(45, 9.2, 2, 0)],
+    week: { cost: 14.2, prev: 19.6, electric: 9.5, fuel: 4.7 }, charges: [{ start: now - 30 * h, end: now - 27 * h, from: 41, to: 91, kwh: 14.8, cost: 4.44, estimated: true }] };
+}
+nav.querySelectorAll("button").forEach(b => b.onclick = () => { tab = b.dataset.t; scrollTo(0, 0); render(); });
+if (/tab=(\w+)/.test(location.search)) tab = RegExp.$1;
+(async () => {
+  // nothing to paste first: start the Dropbox link with the built-in key
+  if (!demo && !store.get("refresh") && !store.get("verifier")) { try { store.set("link", await startLink(DEFAULT_KEY)); } catch (e) {} }
+  render(); load();
+})();
+setInterval(() => { if (document.visibilityState === "visible") load(); }, 60e3);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") load(); });
+</script>
+</body></html>
