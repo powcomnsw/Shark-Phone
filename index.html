@@ -54,7 +54,7 @@ p{font-size:14px;line-height:1.45;margin-top:8px}
 [hidden]{display:none!important}
 </style></head><body>
 <div id="app"></div>
-<nav class="nav" id="nav" hidden><button data-t="truck">Truck</button><button data-t="trips">Trips</button><button data-t="more">More</button></nav>
+<nav class="nav" id="nav" hidden><button data-t="truck">Shark</button><button data-t="trips">Trips</button><button data-t="more">More</button></nav>
 <script>
 "use strict";
 // Shark Central's phone page. It reads one file, shark-status.json, that the truck leaves in the owner's own
@@ -116,7 +116,7 @@ async function download() {
     try {
       const r = await fetch("https://content.dropboxapi.com/2/files/download", { method: "POST",
         headers: { Authorization: "Bearer " + t, "Dropbox-API-Arg": JSON.stringify({ path: FILE }) } });
-      if (r.status === 409) throw Object.assign(new Error("The truck hasn't saved anything to this Dropbox yet"), { final: true });
+      if (r.status === 409) throw Object.assign(new Error("The Shark hasn't saved anything to this Dropbox yet"), { final: true });
       if (!r.ok) throw new Error("Dropbox said " + r.status);
       return await r.json();
     } catch (e) { if (e.final) throw e; last = e; }
@@ -124,7 +124,7 @@ async function download() {
   try {
     const r = await fetch("https://api.dropboxapi.com/2/files/get_temporary_link", { method: "POST",
       headers: { Authorization: "Bearer " + t, "Content-Type": "application/json" }, body: JSON.stringify({ path: FILE }) });
-    if (r.status === 409) throw Object.assign(new Error("The truck hasn't saved anything to this Dropbox yet"), { final: true });
+    if (r.status === 409) throw Object.assign(new Error("The Shark hasn't saved anything to this Dropbox yet"), { final: true });
     const j = await r.json();
     return await (await fetch(j.link)).json();
   } catch (e) { throw e.final ? e : (last || e); }
@@ -133,13 +133,13 @@ async function download() {
 // ---- pages ----
 function head(title) {
   const fresh = data && data.state === "on" && Date.now() - data.updated < 4 * 60e3;
-  const label = !data ? (problem ? "No data" : "Loading") : fresh ? "Truck is on" : "Truck is off";
+  const label = !data ? (problem ? "No data" : "Loading") : fresh ? "Shark is on" : "Shark is off";
   return `<div class="top"><h1>${title}</h1><div class="live" id="refresh"><i class="dot ${fresh ? "on" : ""}"></i>${label}</div></div>`;
 }
 function truckPage() {
   const d = data, fresh = d.state === "on" && Date.now() - d.updated < 4 * 60e3, old = fresh ? "" : " old";
   const seen = fresh ? "" : `<div class="b ink"><div class="lab">Last seen</div><div class="title">${when(d.updated)}</div>
-    <div class="sub" style="margin-top:8px;line-height:1.4">The screen in the truck switches off a few minutes after the truck does. These are its last readings.</div></div>`;
+    <div class="sub" style="margin-top:8px;line-height:1.4">The screen in the Shark switches off a few minutes after the Shark does. These are its last readings.</div></div>`;
   const pct = (name, o, k) => !o ? "" : `<div class="b${old}"><div class="lab">${name}</div><div class="big">${o.pct}<small>%</small></div>
     <div class="sub" style="margin-top:6px">${o.km != null ? o.km + " km" : "&nbsp;"}</div><div class="meter ${k}"><i style="width:${o.pct}%"></i></div></div>`;
   const body = d.body || {};
@@ -156,8 +156,8 @@ function truckPage() {
     `<div class="grid"${seen ? "" : ' style="margin-top:0"'}>${pct("Battery", d.battery, "")}${pct("Fuel", d.fuel, "k")}</div>` +
     (lock || tyres ? `<div class="b stone${old}"><div class="lab">${esc(lock || "Tyres")}</div>${ty ? '<div class="corner">Tyres, psi</div>' : ""}${tyres}</div>` : "") +
     (facts.length ? `<div class="b${old}">${facts.map(f => `<div class="line">${f[0]}<span class="val" style="opacity:1;font-weight:600;font-size:14px">${esc(f[1])}</span></div>`).join("")}</div>` : "") +
-    (fresh && d.liveUrls && d.liveUrls.length ? `<a class="b mint" style="display:block;text-decoration:none" href="${esc(d.liveUrls[0])}"><div class="lab">At the truck?</div>
-      <div style="font-size:20px;font-weight:800;margin-top:4px">Open live controls</div><div class="sub" style="margin-top:4px">Climate, drive mode, music and setup. Your phone needs to be on the truck's Wi-Fi.</div></a>` : "") +
+    (fresh && d.liveUrls && d.liveUrls.length ? `<a class="b mint" style="display:block;text-decoration:none" href="${esc(d.liveUrls[0])}"><div class="lab">At the Shark?</div>
+      <div style="font-size:20px;font-weight:800;margin-top:4px">Open live controls</div><div class="sub" style="margin-top:4px">Climate, drive mode, music and setup. Your phone needs to be on the Shark's Wi-Fi.</div></a>` : "") +
     (d.trip ? `<div class="b mint"><div class="lab">This trip</div><div class="corner">Started ${shortWhen(d.trip.start)}</div>
       <div class="big">${d.trip.km}<small>km</small></div><div class="sub" style="margin-top:6px">${tripBits(d.trip)}</div></div>` : "");
 }
@@ -182,7 +182,7 @@ function tripsPage() {
 }
 function morePage() {
   return head("More") +
-    `<div class="b"><div class="lab">Where this comes from</div><p>The truck saves its readings to a file in your Dropbox every minute while it is on, and once more when it is switched off. This page only reads that file: it can't change anything in the truck.</p>
+    `<div class="b"><div class="lab">Where this comes from</div><p>The Shark saves its readings to a file in your Dropbox every three minutes while it is on, and once more when it is switched off. This page only reads that file: it can't change anything in the Shark.</p>
       ${data ? `<div class="line" style="margin-top:8px">Last saved<span>${when(data.updated)}</span></div><div class="line">Shark Central<span>${esc(data.app || "")}</span></div>` : ""}</div>
      <div class="b stone"><div class="lab">This phone</div><div class="row"><button class="pill" id="reload">Refresh now</button><button class="pill" id="signout">Disconnect Dropbox</button></div></div>`;
 }
@@ -193,7 +193,7 @@ function setupPage(note) {
         <div class="row"><a class="pill on" id="open" target="_blank" rel="noopener" href="#">Open Dropbox</a></div>
         <input id="code" placeholder="Code from Dropbox" autocomplete="off" autocapitalize="off" spellcheck="false">
         <div class="row"><button class="pill on" id="connect">Connect</button><button class="pill" id="back">Use a different key</button></div></div>`
-    : `<div class="b"><div class="lab">Connect your Dropbox</div><p>This page shows what the truck saves to your Dropbox. Paste the same Dropbox app key you gave the truck (Setup → Phone app).</p>
+    : `<div class="b"><div class="lab">Connect your Dropbox</div><p>This page shows what the Shark saves to your Dropbox. Paste the same Dropbox app key you gave the Shark (Setup → Phone app).</p>
         <input id="key" placeholder="App key" value="${esc(key || "")}" autocomplete="off" autocapitalize="off" spellcheck="false">
         <div class="row"><button class="pill on" id="next">Next</button><a class="pill" href="?demo">See it with sample data</a></div></div>`);
 }
@@ -238,7 +238,7 @@ function sample() {
 }
 // Home Screen copies of this page keep an old copy for a while (GitHub Pages lets phones cache it ~10 min, iOS longer):
 // version.json is fetched fresh each time, and a newer one reloads the page at an address the phone hasn't cached.
-const PAGE_VERSION = "3";
+const PAGE_VERSION = "4";
 async function checkVersion() {
   try {
     const v = (await (await fetch("version.json?t=" + Date.now(), { cache: "no-store" })).json()).v;
